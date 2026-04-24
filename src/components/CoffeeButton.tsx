@@ -26,7 +26,7 @@ export default function CoffeeButton() {
 
   return (
     <a
-      href="https://qr.kakaopay.com/Ej8uiFQwS"
+      href="https://qr.kakaopay.com/FX9MSRl4N9c401845"
       target="_blank"
       rel="noopener noreferrer"
       onClick={handleClick}
