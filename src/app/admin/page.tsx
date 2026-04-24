@@ -142,8 +142,8 @@ export default function AdminPage() {
       alert("MP3 파일만 업로드 가능합니다.");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      alert("음악 파일은 10MB 이하만 가능합니다.");
+    if (file.size > 4.5 * 1024 * 1024) {
+      alert("MP3 파일은 1개당 4.5MB 이하만 가능합니다.");
       return;
     }
 
@@ -853,7 +853,7 @@ export default function AdminPage() {
 
         {/* BGM 설정 */}
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
-          <h2 className="text-sm font-medium text-gray-700 mb-3">배경음악 (MP3, 최대 3개, 10MB 이하)</h2>
+          <h2 className="text-sm font-medium text-gray-700 mb-3">배경음악 (MP3, 최대 3개, 1개당 4.5MB 이하)</h2>
           <div className="flex flex-col gap-2">
             {[0, 1, 2].map((slot) => (
               <div key={slot} className="flex items-center gap-3">

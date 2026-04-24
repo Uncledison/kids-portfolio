@@ -37,10 +37,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file size
-    const maxSize = isImage ? 5 * 1024 * 1024 : isAudio ? 10 * 1024 * 1024 : 50 * 1024 * 1024;
+    const maxSize = isImage ? 5 * 1024 * 1024 : isAudio ? 4.5 * 1024 * 1024 : 50 * 1024 * 1024;
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: isImage ? "이미지는 5MB 이하만 가능합니다." : isAudio ? "음악은 10MB 이하만 가능합니다." : "영상은 50MB 이하만 가능합니다." },
+        { error: isImage ? "이미지는 5MB 이하만 가능합니다." : isAudio ? "MP3 파일은 1개당 4.5MB 이하만 가능합니다." : "영상은 50MB 이하만 가능합니다." },
         { status: 400 }
       );
     }
