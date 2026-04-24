@@ -604,8 +604,7 @@ export default function AdminPage() {
               }}
               className="px-2.5 sm:px-4 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800 text-sm whitespace-nowrap"
             >
-              <span className="sm:hidden">글쓰기</span>
-              <span className="hidden sm:inline">+ 새 항목 추가</span>
+              글쓰기
             </button>
             <button
               onClick={() => router.push('/')}
