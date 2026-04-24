@@ -700,15 +700,6 @@ export default function AdminPage() {
               홈
             </button>
             <button
-              onClick={() => {
-                if (selectedIds.size === items.length) setSelectedIds(new Set());
-                else setSelectedIds(new Set(items.map(i => i.id)));
-              }}
-              className="px-2.5 sm:px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm whitespace-nowrap"
-            >
-              {selectedIds.size === items.length && items.length > 0 ? "해제" : "전체선택"}
-            </button>
-            <button
               onClick={handleLogout}
               className="px-2.5 sm:px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm whitespace-nowrap"
             >
@@ -865,6 +856,21 @@ export default function AdminPage() {
                 <div className="flex items-center gap-2 mb-3">
                   <span className={`text-sm font-bold px-3 py-1 rounded-full ${catColor}`}>{catLabel}</span>
                   <span className="text-xs text-gray-400">{catItems.length}개</span>
+                  <button
+                    onClick={() => {
+                      const catIds = catItems.map(i => i.id);
+                      const allSelected = catIds.every(id => selectedIds.has(id));
+                      setSelectedIds(prev => {
+                        const next = new Set(prev);
+                        if (allSelected) catIds.forEach(id => next.delete(id));
+                        else catIds.forEach(id => next.add(id));
+                        return next;
+                      });
+                    }}
+                    className="text-xs text-gray-400 hover:text-gray-700 ml-1"
+                  >
+                    {catItems.every(i => selectedIds.has(i.id)) ? "해제" : "전체선택"}
+                  </button>
                 </div>
                 <div className="grid gap-4">
                   {catItems.map((item) => (
