@@ -5,7 +5,6 @@ import PremiumHeader from "@/components/PremiumHeader";
 import PremiumGallery from "@/components/PremiumGallery";
 import ImmersiveGallery from "@/components/ImmersiveGallery";
 import Footer from "@/components/Footer";
-import CoffeeButton from "@/components/CoffeeButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase, PortfolioItem } from "@/lib/supabase";
 
@@ -172,7 +171,6 @@ export default function Home() {
       />
 
       <Footer dark={theme === 'dark'} />
-      <CoffeeButton />
 
       {/* Branding badge - dark mode only */}
       {theme === 'dark' && (
