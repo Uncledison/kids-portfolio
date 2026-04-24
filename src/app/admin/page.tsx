@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
-import CoffeeButton from "@/components/CoffeeButton";
 
 interface PortfolioItem {
   id: string;
@@ -1185,7 +1184,6 @@ export default function AdminPage() {
       )}
 
       <Footer />
-      <CoffeeButton />
     </div>
   );
 }
