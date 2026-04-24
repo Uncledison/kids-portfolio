@@ -11,7 +11,7 @@ export default function Footer({ dark = false }: { dark?: boolean }) {
       pointerEvents: 'none',
     }}>
       <a
-        href="https://qr.kakaopay.com/Ej8uiFQwS"
+        href="https://ai.uncledison.com"
         target="_blank"
         rel="noopener noreferrer"
         style={{
@@ -47,7 +47,7 @@ export default function Footer({ dark = false }: { dark?: boolean }) {
           e.currentTarget.style.boxShadow = dark ? '0 2px 16px rgba(0,0,0,0.4)' : '0 2px 12px rgba(0,0,0,0.1)';
         }}
       >
-        ☕ <strong style={{ fontWeight: 700 }}>에디슨삼촌</strong> 커피보내기
+        Designed by <strong style={{ fontWeight: 700 }}>에디슨삼촌</strong>
       </a>
     </footer>
   );
