@@ -32,6 +32,8 @@ export default function AdminPage() {
   const [savingPw, setSavingPw] = useState(false);
 
   const [uploading, setUploading] = useState(false);
+  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -109,6 +111,7 @@ export default function AdminPage() {
         json.bgm_2 || null,
         json.bgm_3 || null,
       ]);
+      setFaviconUrl(json.favicon_url || null);
     } catch (err) {
       console.error(err);
     }
@@ -163,6 +166,43 @@ export default function AdminPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ [`bgm_${slot + 1}`]: "" }),
     });
+  };
+
+  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert("파비콘 이미지는 2MB 이하만 가능합니다.");
+      return;
+    }
+    setUploadingFavicon(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: form });
+      const { url } = await res.json();
+      await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ favicon_url: url }),
+      });
+      setFaviconUrl(url);
+    } catch {
+      alert("업로드에 실패했습니다.");
+    } finally {
+      setUploadingFavicon(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleFaviconDelete = async () => {
+    if (!confirm("파비콘을 기본 이미지로 초기화하시겠습니까?")) return;
+    await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ favicon_url: "" }),
+    });
+    setFaviconUrl(null);
   };
 
   const saveChildName = async () => {
@@ -408,6 +448,42 @@ export default function AdminPage() {
           >
             {savingName ? "저장 중..." : "저장"}
           </button>
+        </div>
+
+        {/* 파비콘 설정 */}
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
+          <h2 className="text-sm font-medium text-gray-700 mb-3">파비콘 / 앱 아이콘 (PNG, 2MB 이하)</h2>
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center shrink-0">
+              <img
+                src={faviconUrl || "/favicon.png"}
+                alt="favicon"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex gap-2">
+              <label className="cursor-pointer">
+                <span className="inline-block px-3 py-2 bg-gray-100 rounded-lg text-xs hover:bg-gray-200 transition-colors">
+                  {uploadingFavicon ? "업로드 중..." : "이미지 변경"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  disabled={uploadingFavicon}
+                  onChange={handleFaviconUpload}
+                />
+              </label>
+              {faviconUrl && (
+                <button
+                  onClick={handleFaviconDelete}
+                  className="px-3 py-2 text-xs text-red-400 border border-red-200 rounded-lg hover:bg-red-50"
+                >
+                  초기화
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* 비밀번호 변경 */}
