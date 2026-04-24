@@ -1093,7 +1093,12 @@ export default function AdminPage() {
       {/* Bulk action toolbar */}
       {selectedIds.size > 0 && (
         <div className="fixed bottom-20 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
-          <div className="bg-gray-900 text-white rounded-2xl shadow-2xl px-4 py-3 flex flex-col gap-2 pointer-events-auto max-w-lg w-full">
+          <div className="relative bg-gray-900 text-white rounded-2xl shadow-2xl px-4 py-3 flex flex-col gap-2 pointer-events-auto max-w-lg w-full">
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-gray-700 hover:bg-gray-500 flex items-center justify-center text-white text-sm shadow-lg transition-colors"
+            >✕</button>
             {/* Row 1: 선택 정보 */}
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium whitespace-nowrap">{selectedIds.size}개 선택</span>
