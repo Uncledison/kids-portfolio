@@ -108,9 +108,10 @@ export default function PremiumGallery({ items, category, onCategoryChange, acti
           >
             <button
               onClick={() => onActiveIndexChange(null)}
-              className="absolute top-8 right-8 z-[110] p-4 text-black/50 hover:text-black hover:scale-110 transition-all"
+              className="absolute top-6 right-6 z-[110] flex items-center justify-center w-10 h-10 rounded-full bg-black/8 backdrop-blur-sm hover:bg-black/15 transition-all"
+              style={{ background: 'rgba(0,0,0,0.08)' }}
             >
-              <X size={32} strokeWidth={1} />
+              <X size={22} strokeWidth={1.5} className="text-black/60" />
             </button>
 
             <div className="max-w-4xl w-full flex flex-col items-center gap-12">

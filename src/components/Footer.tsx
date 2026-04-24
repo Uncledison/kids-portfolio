@@ -17,7 +17,7 @@ export default function Footer({ dark = false }: { dark?: boolean }) {
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '6px',
+          gap: '2px',
           padding: '6px 16px',
           borderRadius: '20px',
           background: dark ? 'rgba(28,28,30,0.4)' : 'rgba(255,255,255,0.55)',
@@ -37,7 +37,7 @@ export default function Footer({ dark = false }: { dark?: boolean }) {
         onMouseEnter={e => (e.currentTarget.style.color = dark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.7)')}
         onMouseLeave={e => (e.currentTarget.style.color = dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.4)')}
       >
-        Designed by <strong style={{ fontWeight: 700, marginLeft: '4px' }}>에디슨삼촌</strong>
+        Designed by <strong style={{ fontWeight: 700, marginLeft: '2px' }}>에디슨삼촌</strong>
       </a>
     </footer>
   );

@@ -167,21 +167,19 @@ export default function ImmersiveGallery({ items, onCategoryChange, activeIndex,
                 touchAction: 'none'
               }}
             >
-              <div style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 110 }}>
-                <button
-                  onClick={() => onActiveIndexChange(null)}
-                  style={{
-                    background: 'rgba(255,255,255,0.15)', border: 'none',
-                    color: '#fff', padding: '8px 16px', borderRadius: '20px',
-                    cursor: 'pointer', backdropFilter: 'blur(15px)',
-                    fontWeight: 500, fontSize: '0.85rem'
-                  }}
-                >
-                  Close
-                </button>
-              </div>
-
               <div style={{ width: '100%', height: '55%', overflow: 'hidden', position: 'relative', background: '#000' }}>
+                {/* Close button — floats above image with dark blur pill */}
+                <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 110 }}>
+                  <button
+                    onClick={() => onActiveIndexChange(null)}
+                    style={{
+                      background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.18)',
+                      color: '#fff', padding: '6px 14px', borderRadius: '20px',
+                      cursor: 'pointer', backdropFilter: 'blur(20px)',
+                      fontWeight: 500, fontSize: '0.8rem', letterSpacing: '0.02em'
+                    }}
+                  >✕ 닫기</button>
+                </div>
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={items[activeIndex].id}

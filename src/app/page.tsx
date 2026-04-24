@@ -193,13 +193,13 @@ export default function Home() {
         </div>
       )}
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="sync">
         <motion.main
           key={theme}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         >
           <motion.div
             drag={activeIndex === null ? "x" : false}
