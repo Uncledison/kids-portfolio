@@ -193,14 +193,7 @@ export default function Home() {
         </div>
       )}
 
-      <AnimatePresence mode="sync">
-        <motion.main
-          key={theme}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        >
+      <main>
           <motion.div
             drag={activeIndex === null ? "x" : false}
             dragConstraints={{ left: 0, right: 0 }}
@@ -359,8 +352,7 @@ export default function Home() {
               </div>
             )}
           </motion.div>
-        </motion.main>
-      </AnimatePresence>
+      </main>
     </div>
   );
 }
