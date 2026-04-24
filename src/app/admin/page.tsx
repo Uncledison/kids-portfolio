@@ -1087,50 +1087,46 @@ export default function AdminPage() {
       {/* Bulk action toolbar */}
       {selectedIds.size > 0 && (
         <div className="fixed bottom-20 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
-          <div className="bg-gray-900 text-white rounded-2xl shadow-2xl px-4 py-3 flex flex-wrap items-center gap-3 pointer-events-auto max-w-lg w-full">
-            <span className="text-sm font-medium whitespace-nowrap">{selectedIds.size}개 선택</span>
-            <button
-              onClick={() => setSelectedIds(new Set(items.map(i => i.id)))}
-              className="text-xs text-gray-400 hover:text-white whitespace-nowrap"
-            >전체선택</button>
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              className="text-xs text-gray-400 hover:text-white whitespace-nowrap"
-            >해제</button>
-            <div className="flex-1" />
-            <select
-              value={bulkCategory}
-              onChange={(e) => setBulkCategory(e.target.value)}
-              disabled={bulkProcessing}
-              className="px-2 py-1.5 rounded-lg text-sm bg-gray-700 text-white border border-gray-600 focus:outline-none"
-            >
-              <option value="vision">비전</option>
-              <option value="experience">경험</option>
-              <option value="achievement">성취</option>
-            </select>
-            <button
-              onClick={handleBulkCategoryChange}
-              disabled={bulkProcessing}
-              className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg text-sm font-medium disabled:opacity-50 whitespace-nowrap"
-            >
-              {bulkProcessing ? "처리 중..." : "카테고리 변경"}
-            </button>
-            {selectedIds.size === 1 && (
+          <div className="bg-gray-900 text-white rounded-2xl shadow-2xl px-4 py-3 flex flex-col gap-2 pointer-events-auto max-w-lg w-full">
+            {/* Row 1: 선택 정보 */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium whitespace-nowrap">{selectedIds.size}개 선택</span>
+              <button onClick={() => setSelectedIds(new Set(items.map(i => i.id)))}
+                className="text-xs text-gray-400 hover:text-white whitespace-nowrap">전체선택</button>
+              <button onClick={() => setSelectedIds(new Set())}
+                className="text-xs text-gray-400 hover:text-white whitespace-nowrap">해제</button>
+            </div>
+            {/* Row 2: 액션 버튼들 */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {selectedIds.size === 1 && (
+                <button
+                  onClick={handleBulkSetRepresentative}
+                  disabled={bulkProcessing}
+                  className="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 rounded-lg text-sm font-medium disabled:opacity-50 whitespace-nowrap"
+                >⭐ 대표 설정</button>
+              )}
               <button
-                onClick={handleBulkSetRepresentative}
+                onClick={handleBulkDelete}
                 disabled={bulkProcessing}
-                className="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 rounded-lg text-sm font-medium disabled:opacity-50 whitespace-nowrap"
+                className="px-3 py-1.5 bg-red-500 hover:bg-red-600 rounded-lg text-sm font-medium disabled:opacity-50 whitespace-nowrap"
+              >🗑️ 삭제</button>
+              <div className="flex-1" />
+              <select
+                value={bulkCategory}
+                onChange={(e) => setBulkCategory(e.target.value)}
+                disabled={bulkProcessing}
+                className="px-2 py-1.5 rounded-lg text-sm bg-gray-700 text-white border border-gray-600 focus:outline-none"
               >
-                ⭐ 대표 설정
-              </button>
-            )}
-            <button
-              onClick={handleBulkDelete}
-              disabled={bulkProcessing}
-              className="px-3 py-1.5 bg-red-500 hover:bg-red-600 rounded-lg text-sm font-medium disabled:opacity-50"
-            >
-              🗑️ 삭제
-            </button>
+                <option value="vision">비전</option>
+                <option value="experience">경험</option>
+                <option value="achievement">성취</option>
+              </select>
+              <button
+                onClick={handleBulkCategoryChange}
+                disabled={bulkProcessing}
+                className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg text-sm font-medium disabled:opacity-50 whitespace-nowrap"
+              >{bulkProcessing ? "처리 중..." : "카테고리 변경"}</button>
+            </div>
           </div>
         </div>
       )}
