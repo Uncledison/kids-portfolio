@@ -47,7 +47,7 @@ export default function Footer({ dark = false }: { dark?: boolean }) {
           e.currentTarget.style.boxShadow = dark ? '0 2px 16px rgba(0,0,0,0.4)' : '0 2px 12px rgba(0,0,0,0.1)';
         }}
       >
-        {'☕ '}<strong style={{ fontWeight: 700 }}>에디슨삼촌</strong>{'에게 커피보내기'}
+        ☕ <strong style={{ fontWeight: 700 }}>에디슨삼촌</strong> 커피보내기
       </a>
     </footer>
   );
