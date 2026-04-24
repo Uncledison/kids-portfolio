@@ -34,6 +34,7 @@ export default function AdminPage() {
   const [uploading, setUploading] = useState(false);
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
+  const [faviconSaved, setFaviconSaved] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -187,6 +188,8 @@ export default function AdminPage() {
         body: JSON.stringify({ favicon_url: url }),
       });
       setFaviconUrl(url);
+      setFaviconSaved(true);
+      setTimeout(() => setFaviconSaved(false), 3000);
     } catch {
       alert("업로드에 실패했습니다.");
     } finally {
@@ -452,36 +455,45 @@ export default function AdminPage() {
 
         {/* 파비콘 설정 */}
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
-          <h2 className="text-sm font-medium text-gray-700 mb-3">파비콘 / 앱 아이콘 (PNG, 2MB 이하)</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-medium text-gray-700">파비콘 / 앱 아이콘 (PNG, 2MB 이하)</h2>
+            {faviconSaved && (
+              <span className="text-xs text-green-600 font-medium">✅ 적용됨</span>
+            )}
+          </div>
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center shrink-0">
+            <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-gray-200 bg-gray-50 flex items-center justify-center shrink-0 shadow-sm">
               <img
+                key={faviconUrl}
                 src={faviconUrl || "/favicon.png"}
                 alt="favicon"
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="flex gap-2">
-              <label className="cursor-pointer">
-                <span className="inline-block px-3 py-2 bg-gray-100 rounded-lg text-xs hover:bg-gray-200 transition-colors">
-                  {uploadingFavicon ? "업로드 중..." : "이미지 변경"}
-                </span>
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  className="hidden"
-                  disabled={uploadingFavicon}
-                  onChange={handleFaviconUpload}
-                />
-              </label>
-              {faviconUrl && (
-                <button
-                  onClick={handleFaviconDelete}
-                  className="px-3 py-2 text-xs text-red-400 border border-red-200 rounded-lg hover:bg-red-50"
-                >
-                  초기화
-                </button>
-              )}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex gap-2">
+                <label className="cursor-pointer">
+                  <span className="inline-block px-3 py-2 bg-gray-100 rounded-lg text-xs hover:bg-gray-200 transition-colors">
+                    {uploadingFavicon ? "업로드 중..." : "이미지 변경"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    disabled={uploadingFavicon}
+                    onChange={handleFaviconUpload}
+                  />
+                </label>
+                {faviconUrl && (
+                  <button
+                    onClick={handleFaviconDelete}
+                    className="px-3 py-2 text-xs text-red-400 border border-red-200 rounded-lg hover:bg-red-50"
+                  >
+                    초기화
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-400">브라우저 탭 아이콘 및 앱 설치 아이콘에 사용됩니다</p>
             </div>
           </div>
         </div>
