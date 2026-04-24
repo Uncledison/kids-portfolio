@@ -684,6 +684,15 @@ export default function AdminPage() {
               홈
             </button>
             <button
+              onClick={() => {
+                if (selectedIds.size === items.length) setSelectedIds(new Set());
+                else setSelectedIds(new Set(items.map(i => i.id)));
+              }}
+              className="px-2.5 sm:px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm whitespace-nowrap"
+            >
+              {selectedIds.size === items.length && items.length > 0 ? "해제" : "전체선택"}
+            </button>
+            <button
               onClick={handleLogout}
               className="px-2.5 sm:px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm whitespace-nowrap"
             >
@@ -1065,9 +1074,13 @@ export default function AdminPage() {
           <div className="bg-gray-900 text-white rounded-2xl shadow-2xl px-4 py-3 flex flex-wrap items-center gap-3 pointer-events-auto max-w-lg w-full">
             <span className="text-sm font-medium whitespace-nowrap">{selectedIds.size}개 선택</span>
             <button
+              onClick={() => setSelectedIds(new Set(items.map(i => i.id)))}
+              className="text-xs text-gray-400 hover:text-white whitespace-nowrap"
+            >전체선택</button>
+            <button
               onClick={() => setSelectedIds(new Set())}
-              className="text-xs text-gray-400 hover:text-white"
-            >전체해제</button>
+              className="text-xs text-gray-400 hover:text-white whitespace-nowrap"
+            >해제</button>
             <div className="flex-1" />
             <select
               value={bulkCategory}
