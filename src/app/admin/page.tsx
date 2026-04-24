@@ -227,27 +227,31 @@ export default function AdminPage() {
     return url;
   };
 
-  const handleModalDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsModalDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (!file) return;
-    if (file.type.startsWith("image/")) {
-      if (file.size > 5 * 1024 * 1024) { alert("이미지는 5MB 이하만 가능합니다."); return; }
-    } else if (file.type.startsWith("video/")) {
-      if (file.size > 50 * 1024 * 1024) { alert("영상은 50MB 이하만 가능합니다."); return; }
-    } else return;
+  const processFiles = async (files: File[]) => {
+    const valid = files.filter(f => f.type.startsWith("image/") || f.type.startsWith("video/"));
+    if (valid.length === 0) return;
+    if (valid.length > 1) {
+      setShowModal(false);
+      setBatchItems(filesToBatchItems(valid));
+      return;
+    }
+    const file = valid[0];
+    if (file.type.startsWith("image/") && file.size > 5 * 1024 * 1024) { alert("이미지는 5MB 이하만 가능합니다."); return; }
+    if (file.type.startsWith("video/") && file.size > 50 * 1024 * 1024) { alert("영상은 50MB 이하만 가능합니다."); return; }
     setUploading(true);
     try {
       const url = await uploadFileToStorage(file);
       const name = file.name.replace(/\.[^/.]+$/, "");
-      if (file.type.startsWith("video/")) {
-        setFormData(prev => ({ ...prev, video_url: url, title: prev.title || name }));
-      } else {
-        setFormData(prev => ({ ...prev, image_url: url, title: prev.title || name }));
-      }
+      if (file.type.startsWith("video/")) setFormData(prev => ({ ...prev, video_url: url, title: prev.title || name }));
+      else setFormData(prev => ({ ...prev, image_url: url, title: prev.title || name }));
     } catch { alert("업로드에 실패했습니다."); }
     finally { setUploading(false); }
+  };
+
+  const handleModalDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsModalDragging(false);
+    processFiles(Array.from(e.dataTransfer.files));
   };
 
   const handlePageDragEnter = (e: React.DragEvent) => {
@@ -276,22 +280,10 @@ export default function AdminPage() {
       f => f.type.startsWith("image/") || f.type.startsWith("video/")
     );
     if (files.length === 0) return;
-    if (files.length === 1 && !showModal) {
+    if (files.length === 1) {
       resetForm();
       setShowModal(true);
-      setTimeout(async () => {
-        setUploading(true);
-        try {
-          const url = await uploadFileToStorage(files[0]);
-          const name = files[0].name.replace(/\.[^/.]+$/, "");
-          if (files[0].type.startsWith("video/")) {
-            setFormData(prev => ({ ...prev, video_url: url, title: name }));
-          } else {
-            setFormData(prev => ({ ...prev, image_url: url, title: name }));
-          }
-        } catch { alert("업로드에 실패했습니다."); }
-        finally { setUploading(false); }
-      }, 100);
+      setTimeout(() => processFiles(files), 100);
     } else {
       setBatchItems(filesToBatchItems(files));
     }
@@ -922,22 +914,13 @@ export default function AdminPage() {
                     ref={dropFileInputRef}
                     type="file"
                     accept="image/*,video/*"
+                    multiple
                     className="hidden"
                     disabled={uploading}
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      const isVideo = file.type.startsWith("video/");
-                      if (!isVideo && file.size > 5 * 1024 * 1024) { alert("이미지는 5MB 이하만 가능합니다."); return; }
-                      if (isVideo && file.size > 50 * 1024 * 1024) { alert("영상은 50MB 이하만 가능합니다."); return; }
-                      setUploading(true);
-                      try {
-                        const url = await uploadFileToStorage(file);
-                        const name = file.name.replace(/\.[^/.]+$/, "");
-                        if (isVideo) setFormData(prev => ({ ...prev, video_url: url, title: prev.title || name }));
-                        else setFormData(prev => ({ ...prev, image_url: url, title: prev.title || name }));
-                      } catch { alert("업로드에 실패했습니다."); }
-                      finally { setUploading(false); e.target.value = ""; }
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      e.target.value = "";
+                      processFiles(files);
                     }}
                   />
                 </div>
