@@ -346,6 +346,22 @@ export default function AdminPage() {
     fetchItems();
   };
 
+  const handleBulkSetRepresentative = async () => {
+    if (selectedIds.size !== 1) return;
+    const id = [...selectedIds][0];
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+    setBulkProcessing(true);
+    await fetch("/api/admin", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, is_representative: true, category: item.category }),
+    });
+    setSelectedIds(new Set());
+    setBulkProcessing(false);
+    fetchItems();
+  };
+
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
     if (!confirm(`${selectedIds.size}개 항목을 삭제하시겠습니까?`)) return;
@@ -1099,6 +1115,15 @@ export default function AdminPage() {
             >
               {bulkProcessing ? "처리 중..." : "카테고리 변경"}
             </button>
+            {selectedIds.size === 1 && (
+              <button
+                onClick={handleBulkSetRepresentative}
+                disabled={bulkProcessing}
+                className="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 rounded-lg text-sm font-medium disabled:opacity-50 whitespace-nowrap"
+              >
+                ⭐ 대표 설정
+              </button>
+            )}
             <button
               onClick={handleBulkDelete}
               disabled={bulkProcessing}
