@@ -2,61 +2,63 @@
 import { useState } from "react";
 
 export default function CoffeeButton() {
-  const [hovered, setHovered] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <a
       href="https://qr.kakaopay.com/Ej8uiFQwS"
       target="_blank"
       rel="noopener noreferrer"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onTouchStart={() => setHovered(true)}
-      onTouchEnd={() => setTimeout(() => setHovered(false), 1500)}
+      onMouseEnter={() => setExpanded(true)}
+      onMouseLeave={() => setExpanded(false)}
+      onTouchStart={() => setExpanded(true)}
+      onTouchEnd={() => setTimeout(() => setExpanded(false), 1500)}
       style={{
         position: 'fixed',
-        bottom: '28px',
+        bottom: '20px',
         right: '20px',
         zIndex: 60,
         display: 'flex',
+        flexDirection: 'row',
         alignItems: 'center',
-        gap: '6px',
-        padding: '10px 14px',
-        borderRadius: '22px 22px 4px 22px',
+        height: '32px',
+        borderRadius: '16px',
         background: '#FEE500',
-        boxShadow: hovered
-          ? '0 6px 24px rgba(254,229,0,0.6)'
-          : '0 4px 14px rgba(0,0,0,0.15)',
+        boxShadow: expanded
+          ? '0 4px 20px rgba(254,229,0,0.55)'
+          : '0 2px 10px rgba(0,0,0,0.12)',
         textDecoration: 'none',
         color: '#000',
-        fontWeight: 600,
-        fontSize: '0.78rem',
-        letterSpacing: '0.01em',
-        whiteSpace: 'nowrap',
-        transition: 'box-shadow 0.25s, padding 0.25s',
+        overflow: 'hidden',
+        transition: 'box-shadow 0.25s',
         cursor: 'pointer',
+        whiteSpace: 'nowrap',
       }}
     >
-      <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>☕</span>
+      {/* 텍스트 — 왼쪽으로 펼쳐짐 */}
       <span style={{
-        maxWidth: hovered ? '90px' : '0px',
+        maxWidth: expanded ? '90px' : '0px',
+        opacity: expanded ? 1 : 0,
         overflow: 'hidden',
-        transition: 'max-width 0.3s ease',
-        display: 'inline-block',
-        whiteSpace: 'nowrap',
+        transition: 'max-width 0.3s ease, opacity 0.25s ease',
+        fontSize: '0.72rem',
+        fontWeight: 600,
+        paddingLeft: expanded ? '12px' : '0px',
       }}>
         커피보내기
       </span>
-      {/* 말풍선 꼬리 */}
+      {/* 원형 아이콘 영역 */}
       <span style={{
-        position: 'absolute',
-        bottom: '-7px',
-        right: '10px',
-        width: '14px',
-        height: '8px',
-        background: '#FEE500',
-        clipPath: 'polygon(0 0, 100% 0, 100% 100%)',
-      }} />
+        width: '32px',
+        height: '32px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '1rem',
+        flexShrink: 0,
+      }}>
+        ☕
+      </span>
     </a>
   );
 }
