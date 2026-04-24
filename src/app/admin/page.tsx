@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
 
@@ -35,6 +35,16 @@ export default function AdminPage() {
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
   const [faviconSaved, setFaviconSaved] = useState(false);
+
+  // Drag & drop
+  const [isModalDragging, setIsModalDragging] = useState(false);
+  const [isPageDragging, setIsPageDragging] = useState(false);
+  const [batchFiles, setBatchFiles] = useState<File[]>([]);
+  const [batchCategory, setBatchCategory] = useState("vision");
+  const [batchUploading, setBatchUploading] = useState(false);
+  const [batchProgress, setBatchProgress] = useState(0);
+  const dropFileInputRef = useRef<HTMLInputElement>(null);
+  const dragCounterRef = useRef(0);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -206,6 +216,109 @@ export default function AdminPage() {
       body: JSON.stringify({ favicon_url: "" }),
     });
     setFaviconUrl(null);
+  };
+
+  const uploadFileToStorage = async (file: File): Promise<string> => {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: form });
+    if (!res.ok) throw new Error("upload failed");
+    const { url } = await res.json();
+    return url;
+  };
+
+  const handleModalDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsModalDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    if (file.type.startsWith("image/")) {
+      if (file.size > 5 * 1024 * 1024) { alert("이미지는 5MB 이하만 가능합니다."); return; }
+    } else if (file.type.startsWith("video/")) {
+      if (file.size > 50 * 1024 * 1024) { alert("영상은 50MB 이하만 가능합니다."); return; }
+    } else return;
+    setUploading(true);
+    try {
+      const url = await uploadFileToStorage(file);
+      const name = file.name.replace(/\.[^/.]+$/, "");
+      if (file.type.startsWith("video/")) {
+        setFormData(prev => ({ ...prev, video_url: url, title: prev.title || name }));
+      } else {
+        setFormData(prev => ({ ...prev, image_url: url, title: prev.title || name }));
+      }
+    } catch { alert("업로드에 실패했습니다."); }
+    finally { setUploading(false); }
+  };
+
+  const handlePageDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current++;
+    if (!showModal) setIsPageDragging(true);
+  };
+  const handlePageDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) setIsPageDragging(false);
+  };
+  const handlePageDragOver = (e: React.DragEvent) => { e.preventDefault(); };
+  const handlePageDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current = 0;
+    setIsPageDragging(false);
+    const files = Array.from(e.dataTransfer.files).filter(
+      f => f.type.startsWith("image/") || f.type.startsWith("video/")
+    );
+    if (files.length === 0) return;
+    if (files.length === 1 && !showModal) {
+      resetForm();
+      setShowModal(true);
+      setTimeout(async () => {
+        setUploading(true);
+        try {
+          const url = await uploadFileToStorage(files[0]);
+          const name = files[0].name.replace(/\.[^/.]+$/, "");
+          if (files[0].type.startsWith("video/")) {
+            setFormData(prev => ({ ...prev, video_url: url, title: name }));
+          } else {
+            setFormData(prev => ({ ...prev, image_url: url, title: name }));
+          }
+        } catch { alert("업로드에 실패했습니다."); }
+        finally { setUploading(false); }
+      }, 100);
+    } else {
+      setBatchFiles(files);
+    }
+  };
+
+  const handleBatchUpload = async () => {
+    setBatchUploading(true);
+    setBatchProgress(0);
+    const today = new Date().toISOString().split("T")[0];
+    for (let i = 0; i < batchFiles.length; i++) {
+      const file = batchFiles[i];
+      try {
+        const url = await uploadFileToStorage(file);
+        const isVideo = file.type.startsWith("video/");
+        const title = file.name.replace(/\.[^/.]+$/, "");
+        await fetch("/api/admin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            category: batchCategory,
+            description: "",
+            image_url: isVideo ? "" : url,
+            video_url: isVideo ? url : null,
+            is_representative: false,
+            date: today,
+          }),
+        });
+      } catch (err) { console.error(err); }
+      setBatchProgress(i + 1);
+    }
+    setBatchFiles([]);
+    setBatchUploading(false);
+    fetchItems();
   };
 
   const saveChildName = async () => {
@@ -402,7 +515,84 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div
+      className="min-h-screen bg-gray-50 relative"
+      onDragEnter={handlePageDragEnter}
+      onDragLeave={handlePageDragLeave}
+      onDragOver={handlePageDragOver}
+      onDrop={handlePageDrop}
+    >
+      {/* Page-level drop overlay */}
+      {isPageDragging && (
+        <div className="fixed inset-0 z-[200] bg-black/40 flex items-center justify-center pointer-events-none">
+          <div className="bg-white rounded-3xl px-12 py-10 text-center shadow-2xl">
+            <div className="text-5xl mb-3">📂</div>
+            <p className="text-xl font-bold">여기에 놓으세요</p>
+            <p className="text-sm text-gray-500 mt-1">이미지·영상 여러 개 동시 업로드 가능</p>
+          </div>
+        </div>
+      )}
+
+      {/* Batch upload panel */}
+      {batchFiles.length > 0 && (
+        <div className="fixed inset-0 z-[150] bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h2 className="text-lg font-bold mb-1">일괄 업로드</h2>
+            <p className="text-sm text-gray-500 mb-4">{batchFiles.length}개 파일</p>
+            <div className="max-h-48 overflow-y-auto mb-4 space-y-1">
+              {batchFiles.map((f, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm py-1.5 border-b border-gray-100">
+                  <span className="text-base">{f.type.startsWith("video/") ? "🎬" : "🖼️"}</span>
+                  <span className="flex-1 truncate text-gray-700">{f.name}</span>
+                  <span className="text-xs text-gray-400">{(f.size / 1024 / 1024).toFixed(1)}MB</span>
+                </div>
+              ))}
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">카테고리</label>
+              <select
+                value={batchCategory}
+                onChange={(e) => setBatchCategory(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
+              >
+                <option value="vision">비전</option>
+                <option value="experience">경험</option>
+                <option value="achievement">성취</option>
+              </select>
+            </div>
+            {batchUploading && (
+              <div className="mb-4">
+                <div className="flex justify-between text-xs text-gray-500 mb-1">
+                  <span>업로드 중...</span>
+                  <span>{batchProgress} / {batchFiles.length}</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div
+                    className="bg-black h-2 rounded-full transition-all"
+                    style={{ width: `${(batchProgress / batchFiles.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setBatchFiles([]); setBatchProgress(0); }}
+                disabled={batchUploading}
+                className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleBatchUpload}
+                disabled={batchUploading}
+                className="flex-1 px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 disabled:opacity-50"
+              >
+                {batchUploading ? "업로드 중..." : "업로드"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
           <h1 className="text-base sm:text-xl font-bold whitespace-nowrap">관리페이지</h1>
@@ -662,9 +852,60 @@ export default function AdminPage() {
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <h2 className="text-xl font-bold mb-6">
-                {editingItem ? "항목 수정" : "새 항목 추가"}
+                {editingItem ? "항목 수정" : "글쓰기"}
               </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Drag & Drop Zone */}
+                <div
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsModalDragging(true); }}
+                  onDragLeave={(e) => { e.stopPropagation(); setIsModalDragging(false); }}
+                  onDrop={(e) => { e.stopPropagation(); handleModalDrop(e); }}
+                  onClick={() => dropFileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
+                    isModalDragging ? "border-blue-400 bg-blue-50" : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  {uploading ? (
+                    <p className="text-sm text-gray-500">업로드 중...</p>
+                  ) : formData.image_url ? (
+                    <img src={formData.image_url} alt="Preview" className="max-h-48 mx-auto rounded-lg object-contain" />
+                  ) : formData.video_url ? (
+                    <video src={formData.video_url} className="max-h-48 mx-auto rounded-lg" controls />
+                  ) : (
+                    <>
+                      <div className="text-3xl mb-2">📁</div>
+                      <p className="text-sm font-medium text-gray-700">이미지 또는 영상을 드래그하거나 클릭</p>
+                      <p className="text-xs text-gray-400 mt-1">이미지 5MB · 영상 50MB 이하</p>
+                    </>
+                  )}
+                  <input
+                    ref={dropFileInputRef}
+                    type="file"
+                    accept="image/*,video/*"
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const isVideo = file.type.startsWith("video/");
+                      if (!isVideo && file.size > 5 * 1024 * 1024) { alert("이미지는 5MB 이하만 가능합니다."); return; }
+                      if (isVideo && file.size > 50 * 1024 * 1024) { alert("영상은 50MB 이하만 가능합니다."); return; }
+                      setUploading(true);
+                      try {
+                        const url = await uploadFileToStorage(file);
+                        const name = file.name.replace(/\.[^/.]+$/, "");
+                        if (isVideo) setFormData(prev => ({ ...prev, video_url: url, title: prev.title || name }));
+                        else setFormData(prev => ({ ...prev, image_url: url, title: prev.title || name }));
+                      } catch { alert("업로드에 실패했습니다."); }
+                      finally { setUploading(false); e.target.value = ""; }
+                    }}
+                  />
+                </div>
+                {(formData.image_url || formData.video_url) && (
+                  <button type="button" onClick={() => setFormData(prev => ({ ...prev, image_url: "", video_url: "" }))}
+                    className="text-xs text-red-400 hover:underline">파일 제거</button>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium mb-1">제목</label>
                   <input
@@ -697,49 +938,6 @@ export default function AdminPage() {
                     rows={3}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">이미지 (5MB 이하)</label>
-                  <div className="flex gap-2 items-center">
-                    <label className="px-4 py-2 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors">
-                      <span className="text-sm">파일 선택</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleFileUpload(e, "image")}
-                        className="hidden"
-                        disabled={uploading}
-                      />
-                    </label>
-                    {formData.image_url && (
-                      <span className="text-sm text-green-600">✓ 업로드됨</span>
-                    )}
-                  </div>
-                  {formData.image_url && (
-                    <div className="mt-2">
-                      <img src={formData.image_url} alt="Preview" className="w-24 h-32 object-cover rounded-lg" />
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">영상 URL (선택) <span className="text-gray-400 font-normal">(50MB까지 가능)</span></label>
-                  <div className="flex gap-2 items-center">
-                    <label className="px-4 py-2 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors">
-                      <span className="text-sm">파일 선택</span>
-                      <input
-                        type="file"
-                        accept="video/*"
-                        onChange={(e) => handleFileUpload(e, "video")}
-                        className="hidden"
-                        disabled={uploading}
-                      />
-                    </label>
-                    {formData.video_url && (
-                      <span className="text-sm text-green-600">✓ 업로드됨</span>
-                    )}
-                  </div>
                 </div>
 
                 <div>
