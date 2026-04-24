@@ -145,7 +145,7 @@ export default function Home() {
     let nextIndex = currentIndex + direction;
     if (nextIndex < 0) nextIndex = categoryIds.length - 1;
     if (nextIndex >= categoryIds.length) nextIndex = 0;
-    setActiveIndex(0);
+    setActiveIndex(null);
     setActiveCategory(categoryIds[nextIndex]);
   };
 

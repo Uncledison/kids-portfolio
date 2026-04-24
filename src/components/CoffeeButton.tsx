@@ -1,18 +1,38 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 export default function CoffeeButton() {
   const [expanded, setExpanded] = useState(false);
+  const expandedRef = useRef(false);
+
+  const handleClick = (e: React.MouseEvent) => {
+    // 데스크탑: 항상 바로 이동
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!expandedRef.current) {
+      // 첫 터치 — 펼치기만, 이동 막기
+      e.preventDefault();
+      expandedRef.current = true;
+      setExpanded(true);
+      // 3초 후 자동 닫힘
+      setTimeout(() => {
+        expandedRef.current = false;
+        setExpanded(false);
+      }, 3000);
+    }
+    // 두 번째 터치는 preventDefault 안 함 → 링크 이동
+  };
 
   return (
     <a
       href="https://qr.kakaopay.com/Ej8uiFQwS"
       target="_blank"
       rel="noopener noreferrer"
+      onClick={handleClick}
+      onTouchStart={handleTouchStart}
       onMouseEnter={() => setExpanded(true)}
-      onMouseLeave={() => setExpanded(false)}
-      onTouchStart={() => setExpanded(true)}
-      onTouchEnd={() => setTimeout(() => setExpanded(false), 1500)}
+      onMouseLeave={() => { setExpanded(false); expandedRef.current = false; }}
       style={{
         position: 'fixed',
         bottom: '20px',
@@ -47,7 +67,7 @@ export default function CoffeeButton() {
       }}>
         커피보내기
       </span>
-      {/* 원형 아이콘 영역 */}
+      {/* 원형 아이콘 */}
       <span style={{
         width: '32px',
         height: '32px',
