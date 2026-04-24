@@ -39,7 +39,7 @@ export default function AdminPage() {
   // Drag & drop
   const [isModalDragging, setIsModalDragging] = useState(false);
   const [isPageDragging, setIsPageDragging] = useState(false);
-  const [batchFiles, setBatchFiles] = useState<File[]>([]);
+  const [batchItems, setBatchItems] = useState<{ file: File; title: string; description: string; preview: string }[]>([]);
   const [batchCategory, setBatchCategory] = useState("vision");
   const [batchUploading, setBatchUploading] = useState(false);
   const [batchProgress, setBatchProgress] = useState(0);
@@ -261,6 +261,13 @@ export default function AdminPage() {
     if (dragCounterRef.current === 0) setIsPageDragging(false);
   };
   const handlePageDragOver = (e: React.DragEvent) => { e.preventDefault(); };
+  const filesToBatchItems = (files: File[]) => files.map(f => ({
+    file: f,
+    title: f.name.replace(/\.[^/.]+$/, ""),
+    description: "",
+    preview: URL.createObjectURL(f),
+  }));
+
   const handlePageDrop = (e: React.DragEvent) => {
     e.preventDefault();
     dragCounterRef.current = 0;
@@ -286,7 +293,7 @@ export default function AdminPage() {
         finally { setUploading(false); }
       }, 100);
     } else {
-      setBatchFiles(files);
+      setBatchItems(filesToBatchItems(files));
     }
   };
 
@@ -294,19 +301,18 @@ export default function AdminPage() {
     setBatchUploading(true);
     setBatchProgress(0);
     const today = new Date().toISOString().split("T")[0];
-    for (let i = 0; i < batchFiles.length; i++) {
-      const file = batchFiles[i];
+    for (let i = 0; i < batchItems.length; i++) {
+      const { file, title, description } = batchItems[i];
       try {
         const url = await uploadFileToStorage(file);
         const isVideo = file.type.startsWith("video/");
-        const title = file.name.replace(/\.[^/.]+$/, "");
         await fetch("/api/admin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            title,
+            title: title || file.name.replace(/\.[^/.]+$/, ""),
             category: batchCategory,
-            description: "",
+            description,
             image_url: isVideo ? "" : url,
             video_url: isVideo ? url : null,
             is_representative: false,
@@ -316,7 +322,8 @@ export default function AdminPage() {
       } catch (err) { console.error(err); }
       setBatchProgress(i + 1);
     }
-    setBatchFiles([]);
+    batchItems.forEach(item => URL.revokeObjectURL(item.preview));
+    setBatchItems([]);
     setBatchUploading(false);
     fetchItems();
   };
@@ -534,61 +541,95 @@ export default function AdminPage() {
       )}
 
       {/* Batch upload panel */}
-      {batchFiles.length > 0 && (
-        <div className="fixed inset-0 z-[150] bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <h2 className="text-lg font-bold mb-1">일괄 업로드</h2>
-            <p className="text-sm text-gray-500 mb-4">{batchFiles.length}개 파일</p>
-            <div className="max-h-48 overflow-y-auto mb-4 space-y-1">
-              {batchFiles.map((f, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm py-1.5 border-b border-gray-100">
-                  <span className="text-base">{f.type.startsWith("video/") ? "🎬" : "🖼️"}</span>
-                  <span className="flex-1 truncate text-gray-700">{f.name}</span>
-                  <span className="text-xs text-gray-400">{(f.size / 1024 / 1024).toFixed(1)}MB</span>
+      {batchItems.length > 0 && (
+        <div className="fixed inset-0 z-[150] bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="p-5 border-b border-gray-100">
+              <h2 className="text-lg font-bold">일괄 업로드</h2>
+              <p className="text-sm text-gray-500 mt-0.5">{batchItems.length}개 파일 · 각 제목과 설명을 입력하세요</p>
+              <div className="mt-3 flex items-center gap-2">
+                <label className="text-sm font-medium whitespace-nowrap">카테고리</label>
+                <select
+                  value={batchCategory}
+                  onChange={(e) => setBatchCategory(e.target.value)}
+                  disabled={batchUploading}
+                  className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none"
+                >
+                  <option value="vision">비전</option>
+                  <option value="experience">경험</option>
+                  <option value="achievement">성취</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Scrollable item list */}
+            <div className="overflow-y-auto flex-1 p-4 space-y-4">
+              {batchItems.map((item, i) => (
+                <div key={i} className="flex gap-3 p-3 border border-gray-100 rounded-xl">
+                  {/* Preview */}
+                  <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+                    {item.file.type.startsWith("video/") ? (
+                      <video src={item.preview} className="w-full h-full object-cover" muted />
+                    ) : (
+                      <img src={item.preview} alt="" className="w-full h-full object-cover" />
+                    )}
+                  </div>
+                  {/* Fields */}
+                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                    <input
+                      type="text"
+                      value={item.title}
+                      onChange={(e) => setBatchItems(prev => prev.map((it, idx) => idx === i ? { ...it, title: e.target.value } : it))}
+                      placeholder="제목"
+                      disabled={batchUploading}
+                      className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5"
+                    />
+                    <textarea
+                      value={item.description}
+                      onChange={(e) => setBatchItems(prev => prev.map((it, idx) => idx === i ? { ...it, description: e.target.value } : it))}
+                      placeholder="설명 (선택)"
+                      disabled={batchUploading}
+                      rows={2}
+                      className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/5 resize-none"
+                    />
+                  </div>
+                  {/* Remove */}
+                  {!batchUploading && (
+                    <button
+                      onClick={() => setBatchItems(prev => prev.filter((_, idx) => idx !== i))}
+                      className="text-gray-300 hover:text-red-400 text-lg shrink-0 self-start"
+                    >✕</button>
+                  )}
                 </div>
               ))}
             </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">카테고리</label>
-              <select
-                value={batchCategory}
-                onChange={(e) => setBatchCategory(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
-              >
-                <option value="vision">비전</option>
-                <option value="experience">경험</option>
-                <option value="achievement">성취</option>
-              </select>
-            </div>
+
+            {/* Progress */}
             {batchUploading && (
-              <div className="mb-4">
+              <div className="px-5 pb-2">
                 <div className="flex justify-between text-xs text-gray-500 mb-1">
                   <span>업로드 중...</span>
-                  <span>{batchProgress} / {batchFiles.length}</span>
+                  <span>{batchProgress} / {batchItems.length}</span>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-2">
-                  <div
-                    className="bg-black h-2 rounded-full transition-all"
-                    style={{ width: `${(batchProgress / batchFiles.length) * 100}%` }}
-                  />
+                <div className="w-full bg-gray-100 rounded-full h-1.5">
+                  <div className="bg-black h-1.5 rounded-full transition-all" style={{ width: `${(batchProgress / batchItems.length) * 100}%` }} />
                 </div>
               </div>
             )}
-            <div className="flex gap-3">
+
+            {/* Footer buttons */}
+            <div className="p-4 border-t border-gray-100 flex gap-3">
               <button
-                onClick={() => { setBatchFiles([]); setBatchProgress(0); }}
+                onClick={() => { batchItems.forEach(it => URL.revokeObjectURL(it.preview)); setBatchItems([]); setBatchProgress(0); }}
                 disabled={batchUploading}
                 className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
-              >
-                취소
-              </button>
+              >취소</button>
               <button
                 onClick={handleBatchUpload}
                 disabled={batchUploading}
                 className="flex-1 px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 disabled:opacity-50"
-              >
-                {batchUploading ? "업로드 중..." : "업로드"}
-              </button>
+              >{batchUploading ? "업로드 중..." : `${batchItems.length}개 업로드`}</button>
             </div>
           </div>
         </div>
