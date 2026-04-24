@@ -32,6 +32,9 @@ export default function AdminPage() {
   const [savingPw, setSavingPw] = useState(false);
 
   const [uploading, setUploading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkCategory, setBulkCategory] = useState("vision");
+  const [bulkProcessing, setBulkProcessing] = useState(false);
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
   const [faviconSaved, setFaviconSaved] = useState(false);
@@ -317,6 +320,41 @@ export default function AdminPage() {
     batchItems.forEach(item => URL.revokeObjectURL(item.preview));
     setBatchItems([]);
     setBatchUploading(false);
+    fetchItems();
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkCategoryChange = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkProcessing(true);
+    for (const id of selectedIds) {
+      await fetch("/api/admin", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, category: bulkCategory }),
+      });
+    }
+    setSelectedIds(new Set());
+    setBulkProcessing(false);
+    fetchItems();
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`${selectedIds.size}개 항목을 삭제하시겠습니까?`)) return;
+    setBulkProcessing(true);
+    for (const id of selectedIds) {
+      await fetch(`/api/admin?id=${id}`, { method: "DELETE" });
+    }
+    setSelectedIds(new Set());
+    setBulkProcessing(false);
     fetchItems();
   };
 
@@ -807,8 +845,19 @@ export default function AdminPage() {
                   {catItems.map((item) => (
             <div
               key={item.id}
-              className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex gap-4"
+              className={`bg-white rounded-xl p-4 shadow-sm border flex gap-4 transition-colors ${
+                selectedIds.has(item.id) ? "border-blue-400 bg-blue-50/40" : "border-gray-100"
+              }`}
             >
+              {/* Checkbox */}
+              <div className="flex items-start pt-1 shrink-0">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(item.id)}
+                  onChange={() => toggleSelect(item.id)}
+                  className="w-4 h-4 accent-black cursor-pointer"
+                />
+              </div>
               <div className="w-24 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                 {item.image_url ? (
                   <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
@@ -1006,6 +1055,44 @@ export default function AdminPage() {
                 </div>
               </form>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk action toolbar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-20 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
+          <div className="bg-gray-900 text-white rounded-2xl shadow-2xl px-4 py-3 flex flex-wrap items-center gap-3 pointer-events-auto max-w-lg w-full">
+            <span className="text-sm font-medium whitespace-nowrap">{selectedIds.size}개 선택</span>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-xs text-gray-400 hover:text-white"
+            >전체해제</button>
+            <div className="flex-1" />
+            <select
+              value={bulkCategory}
+              onChange={(e) => setBulkCategory(e.target.value)}
+              disabled={bulkProcessing}
+              className="px-2 py-1.5 rounded-lg text-sm bg-gray-700 text-white border border-gray-600 focus:outline-none"
+            >
+              <option value="vision">비전</option>
+              <option value="experience">경험</option>
+              <option value="achievement">성취</option>
+            </select>
+            <button
+              onClick={handleBulkCategoryChange}
+              disabled={bulkProcessing}
+              className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg text-sm font-medium disabled:opacity-50 whitespace-nowrap"
+            >
+              {bulkProcessing ? "처리 중..." : "카테고리 변경"}
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              disabled={bulkProcessing}
+              className="px-3 py-1.5 bg-red-500 hover:bg-red-600 rounded-lg text-sm font-medium disabled:opacity-50"
+            >
+              🗑️ 삭제
+            </button>
           </div>
         </div>
       )}
