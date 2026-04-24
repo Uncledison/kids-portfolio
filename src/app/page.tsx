@@ -34,6 +34,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const darkContainerRef = useRef<HTMLDivElement>(null);
 
   const categories = [
     { id: "vision", title: "비전", desc: "꿈과 미래를 그립니다", color: "#0071e3" },
@@ -69,6 +70,7 @@ export default function Home() {
           setChildName(settings.child_name || "");
           const urls = [settings.bgm_1, settings.bgm_2, settings.bgm_3].filter(Boolean) as string[];
           setBgmTracks(urls);
+          if (settings.default_theme === 'dark') setTheme('dark');
         }
       } catch (err) {
         console.error(err);
@@ -147,6 +149,10 @@ export default function Home() {
     if (nextIndex >= categoryIds.length) nextIndex = 0;
     setActiveIndex(null);
     setActiveCategory(categoryIds[nextIndex]);
+    // 다크모드 컨테이너 스크롤 맨 위로
+    if (darkContainerRef.current) {
+      darkContainerRef.current.scrollTop = 0;
+    }
   };
 
   const displayTitle = childName || "성장일기";
@@ -216,7 +222,7 @@ export default function Home() {
                 onActiveIndexChange={handleActiveIndexChange}
               />
             ) : (
-              <div style={{ backgroundColor: '#000', overflowY: 'auto', height: '100vh', touchAction: 'pan-y' }}>
+              <div ref={darkContainerRef} style={{ backgroundColor: '#000', overflowY: 'auto', height: '100vh', touchAction: 'pan-y' }}>
                 <motion.div
                   drag={activeIndex === null ? "x" : false}
                   dragConstraints={{ left: 0, right: 0 }}

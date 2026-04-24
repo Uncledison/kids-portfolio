@@ -26,6 +26,7 @@ export default function AdminPage() {
   const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [childName, setChildName] = useState("");
+  const [defaultTheme, setDefaultTheme] = useState<'white' | 'dark'>('white');
   const [savingName, setSavingName] = useState(false);
   const [bgmUrls, setBgmUrls] = useState<(string | null)[]>([null, null, null]);
   const [uploadingBgm, setUploadingBgm] = useState<number | null>(null);
@@ -127,6 +128,8 @@ export default function AdminPage() {
         json.bgm_3 || null,
       ]);
       setFaviconUrl(json.favicon_url || null);
+      if (json.default_theme === 'dark') setDefaultTheme('dark');
+      else setDefaultTheme('white');
     } catch (err) {
       console.error(err);
     }
@@ -727,6 +730,44 @@ export default function AdminPage() {
             className="px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap"
           >
             {savingName ? "저장 중..." : "저장"}
+          </button>
+        </div>
+
+        {/* 시작 모드 설정 */}
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-700">시작 화면 모드</p>
+            <p className="text-xs text-gray-400 mt-0.5">{defaultTheme === 'dark' ? '🌙 다크모드로 시작' : '☀️ 화이트모드로 시작'}</p>
+          </div>
+          <button
+            onClick={async () => {
+              const next = defaultTheme === 'white' ? 'dark' : 'white';
+              setDefaultTheme(next);
+              await fetch('/api/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ default_theme: next }),
+              });
+            }}
+            style={{
+              width: '56px', height: '30px', borderRadius: '15px', border: 'none',
+              background: defaultTheme === 'dark' ? '#1c1c1e' : '#e5e5ea',
+              position: 'relative', cursor: 'pointer',
+              transition: 'background 0.3s',
+            }}
+          >
+            <span style={{
+              position: 'absolute', top: '3px',
+              left: defaultTheme === 'dark' ? '29px' : '3px',
+              width: '24px', height: '24px', borderRadius: '12px',
+              background: defaultTheme === 'dark' ? '#fff' : '#fff',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+              transition: 'left 0.3s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '12px',
+            }}>
+              {defaultTheme === 'dark' ? '🌙' : '☀️'}
+            </span>
           </button>
         </div>
 
